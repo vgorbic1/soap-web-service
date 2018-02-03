@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GetCourseDetailsResponse xmlns="http://gorbich.com/soap/courses"
+xmlns:xsi="http://www.w3.org/201/XMLSchema-instance" 
+xsi:schemaLocation="http://gorbich.com/soap/courses course-details.xsd">
+  <CourseDetails>
+    <id>123</id>
+    <name>Spring Course</name>
+    <description>I hope you will learn something</description>
+  </CourseDetails>  
+</GetCourseDetailsResponse>
