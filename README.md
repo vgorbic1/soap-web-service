@@ -109,3 +109,89 @@ Assign schema location to the request XML file:
 		</plugins>
 	</build>
 ```
+### Creating Endpoint
+Endpoint receives the request, processes it and sends response back.
+The class is created to handle this procedure. The class has a method that
+takes the request as a parameter and returns the response. `@Endpoint` annotation is added to the class and `@PayloadRoot()` for the method to specify namespace and localpart. Another annotation is added to the parameter of the method - @RequestPayload. It converts XML object to Java object. And still another to method, to return the object converted to XML.
+```java
+package com.gorbich.soap.webservices;
+
+import org.springframework.ws.server.endpoint.annotation.Endpoint;
+import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
+import org.springframework.ws.server.endpoint.annotation.RequestPayload;
+import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
+
+import com.gorbich.soap.courses.GetCourseDetailsRequest;
+import com.gorbich.soap.courses.GetCourseDetailsResponse;
+
+@Endpoint
+public class CourseDetailsEndpoint {
+
+	@PayloadRoot(namespace="http://gorbich.com/soap/courses",
+			localPart="GetCourseDetailsRequest")
+	@ResponsePayload
+	public GetCourseDetailsResponse 
+		processCourseDetailsRequest(@RequestPayload GetCourseDetailsRequest request) {	
+		GetCourseDetailsResponse response = new GetCourseDetailsResponse();
+		return response;
+		
+	}
+}
+```
+Business logic is added (dummy data for example)
+```java
+...
+CourseDetails courseDetails = new CourseDetails();
+		courseDetails.setId(request.getId());
+		courseDetails.setName("Microservices Course");
+		courseDetails.setDescription("This is a must learn course");
+		return response;
+...
+```
+### Web Service Configuration
+A `WebServiceConfig` class created to put web service configuration in.
+`@EnableWs` and `@Configuration` annotations were added. Message Dispatcher Servlet is added and mapped to the specific URL.
+```java
+package com.gorbich.soap.webservices;
+
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.ws.config.annotation.EnableWs;
+import org.springframework.ws.transport.http.MessageDispatcherServlet;
+
+@EnableWs
+@Configuration
+public class WebServiceConfig {
+
+	@Bean
+	public ServletRegistrationBean messageDispatcherServlet(ApplicationContext context) {
+		MessageDispatcherServlet messageDispatcherServlet = new MessageDispatcherServlet();
+		messageDispatcherServlet.setApplicationContext(context);
+		messageDispatcherServlet.setTransformWsdlLocations(true);
+		return new ServletRegistrationBean(messageDispatcherServlet, "/ws/*");
+	}
+}
+```
+### WSDL Configuration
+First, schema is defined by creating an `XsdSchema` and `DefaultWsdl11Definition` beans:
+```java
+...
+	@Bean
+	public XsdSchema coursesSchema(){
+		return new SimpleXsdSchema(new ClassPathResource("course-details.xsd"));
+	}
+	
+	@Bean(name="courses")
+	public DefaultWsdl11Definition defaultWsdl11Definition(XsdSchema coursesSchema){
+		DefaultWsdl11Definition definition = new DefaultWsdl11Definition();	
+		definition.setPortTypeName("CoursePort");
+		definition.setTargetNamespace("http://gorbich.com/soap/courses");
+		definition.setLocationUri("/ws");
+		definition.setSchema(coursesSchema);
+		return definition;
+	}
+...
+```
+Added `wsdl4j` dependency into `pom.xml` file.
